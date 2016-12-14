@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <pthread.h>
+
 #define KILO (1024)
 #define MEGA (1024*1024)
 #define MAX_ITEMS (64*MEGA)
@@ -16,6 +18,9 @@
 #ifndef THREAD_COUNT
     #define THREAD_COUNT 8
 #endif
+
+int thread_count = 1;
+pthread_t threads[THREAD_COUNT];
 
 static int *v;
 
@@ -72,17 +77,19 @@ partition(int *v, unsigned low, unsigned high, unsigned pivot_index)
 
 struct qsortparams {
     int *v;
-    unsigned int low;
-    unsigned int high;
+    unsigned low;
+    unsigned high;
+    unsigned depth;
 };
 
 static void
 quick_sort(void* data)
 {
-    struct qsortparams* params = (struct qsortparams*) data;
-    int* v = params->v;
-    unsigned int low = params->low;
-    unsigned int high = params->high;
+    struct qsortparams* pars = (struct qsortparams*) data;
+    int* v = pars->v;
+    unsigned low = pars->low;
+    unsigned high = pars->high;
+    unsigned depth = pars->depth;
     free(data);
 
     unsigned pivot_index;
@@ -102,11 +109,24 @@ quick_sort(void* data)
         struct qsortparams* params = malloc(sizeof(struct qsortparams));
         params->v = v;
         params->low = low;
+        params->high = pivot_index-1;
+        params->depth = depth+1;
+        if ( depth < 10 && (THREAD_COUNT >> depth) >= 1 && thread_count < THREAD_COUNT){
+            //printf("d=%d at %d,%d and %d\n", depth, low, high, THREAD_COUNT >> depth);
+            thread_count++;
+            pthread_create(&threads[thread_count-1], NULL, (void*) quick_sort, (void*) params);
+        }
+        else
+            quick_sort((void*)params);
+    }
+    if (pivot_index < high){
+        struct qsortparams* params = malloc(sizeof(struct qsortparams));
+        params->v = v;
+        params->low = pivot_index+1;
         params->high = high;
+        params->depth = depth+1;
         quick_sort((void*)params);
     }
-    if (pivot_index < high)
-        quick_sort((void*)params);
 }
 
 int
@@ -118,7 +138,11 @@ main(int argc, char **argv)
     params->v = v;
     params->low = 0;
     params->high = MAX_ITEMS-1;
+    params->depth = 1;
     quick_sort((void*) params);
-    //print_array();
+    for (int ti=0; ti < THREAD_COUNT; ti++){
+        pthread_join(threads[ti], NULL);
+    }
+    print_array();
 }
 
