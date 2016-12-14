@@ -46,8 +46,7 @@ pthread_mutex_t threadlocks[THREAD_COUNT];
 struct mandelparams {
     float width;
     float height;
-    int i;
-    int j;
+    int n;
     unsigned int* pixmap;
 };
 
@@ -55,99 +54,88 @@ void mandelcalc(void* data){
     struct mandelparams* params = (struct mandelparams*) data;
     float width = params->width;
     float height = params->height;
-    int i = params->i;
-    int j = params->j;
+    int n = params->n;
     unsigned int* pixmap = params->pixmap;
     free(params);
 
-    float b = xmin + j * (xmax - xmin) / width;
-    float a = ymin + i * (ymax - ymin) / height;
-    float sx = 0.0f;
-    float sy = 0.0f;
-    int ii = 0;
-    while (sx + sy <= 64.0f) {
-        float xn = sx * sx - sy * sy + b;
-        float yn = 2 * sx * sy + a;
-        sx = xn;
-        sy = yn;
-        ii++;
-        if (ii == 1500)	{
-            break;
+    for (int i = n; i < height; i+=THREAD_COUNT) {
+        for (int j = 0; j < width; j++) {
+            float b = xmin + j * (xmax - xmin) / width;
+            float a = ymin + i * (ymax - ymin) / height;
+            float sx = 0.0f;
+            float sy = 0.0f;
+            int ii = 0;
+            while (sx + sy <= 64.0f) {
+                float xn = sx * sx - sy * sy + b;
+                float yn = 2 * sx * sy + a;
+                sx = xn;
+                sy = yn;
+                ii++;
+                if (ii == 1500)	{
+                    break;
+                }
+            }
+            if (ii == 1500)	{
+                pixmap[j+i*(int)width] = 0;
+            }
+            else {
+                int c = (int)((ii / 32.0f) * 256.0f);
+                pixmap[j + i *(int)width] = pal[c%256];
+            }
         }
-    }
-    if (ii == 1500)	{
-        pixmap[j+i*(int)width] = 0;
-    }
-    else {
-        int c = (int)((ii / 32.0f) * 256.0f);
-        pixmap[j + i *(int)width] = pal[c%256];
     }
 }
 
 void mandelbrot(float width, float height, unsigned int *pixmap)
 {
-	int i, j;
-    int ti = 0;
-	for (i = 0; i < height; i++) {
-		for (j = 0; j < width; j++) {
-            bool calculated = false;
-            while ( calculated == false ){
-                if (pthread_mutex_trylock(&threadlocks[ti]) == 0){
-                    struct mandelparams* args = malloc(sizeof(struct mandelparams));
-                    args->width = width;
-                    args->height = height;
-                    args->i = i;
-                    args->j = j;
-                    args->pixmap = pixmap;
+    for (int n=0; n<THREAD_COUNT; n++){
+        struct mandelparams* args = malloc(sizeof(struct mandelparams));
+        args->width = width;
+        args->height = height;
+        args->n = n;
+        args->pixmap = pixmap;
 
-                    pthread_create(&threads[ti], NULL, (void*) mandelcalc, (void*)args);
-
-                    pthread_mutex_unlock(&threadlocks[ti]);
-                    calculated = true;
-                }
-                ti = (ti+1)%THREAD_COUNT;
-            }
-		}
-	}
+        pthread_create(&threads[n], NULL, (void*) mandelcalc, (void*)args);
+    }
     for (int ti=0; ti<THREAD_COUNT; ti++)
         pthread_join(threads[ti], NULL);
 }
 
 void writetga(unsigned int *pixmap, unsigned int width, unsigned int height, char *name)
 {
-	FILE *f;
-	int i,j;
-	char buffer[50];
-	f = fopen(name,"wb");
-	fwrite("\x00\x00\x02",sizeof(char),3,f);
-	fwrite("\x00\x00\x00\x00\x00",sizeof(char),5,f);
-	fwrite("\x00\x00",sizeof(char),2,f);
-	fwrite("\x00\x00",sizeof(char),2,f);
-	sprintf(buffer,"%c%c",(width & 0x00ff)%0xff,(width & 0xff00)%0xff);
-	fwrite(buffer,sizeof(char),2,f);
-	sprintf(buffer,"%c%c",(height & 0x00ff)%0xff,(height & 0xff00)%0xff);
-	fwrite(buffer,sizeof(char),2,f);
-	fwrite("\x18\x00",sizeof(char),2,f);
-	for (i = height-1; i >= 0; i--) {
-		for (j = 0; j < width; j++) {
-			sprintf(buffer, "%c%c%c",
-				(pixmap[j+(i)*width]>>16)&0x000000ff,
-				(pixmap[j+i*width]>>8)&0x000000ff,
-				(pixmap[j+i*width])&0x000000ff);
-			fwrite(buffer,sizeof(char),3,f);
-		}
-	}
-	fclose(f);
+    FILE *f;
+    int i,j;
+    char buffer[50];
+    f = fopen(name,"wb");
+    fwrite("\x00\x00\x02",sizeof(char),3,f);
+    fwrite("\x00\x00\x00\x00\x00",sizeof(char),5,f);
+    fwrite("\x00\x00",sizeof(char),2,f);
+    fwrite("\x00\x00",sizeof(char),2,f);
+    sprintf(buffer,"%c%c",(width & 0x00ff)%0xff,(width & 0xff00)%0xff);
+    fwrite(buffer,sizeof(char),2,f);
+    sprintf(buffer,"%c%c",(height & 0x00ff)%0xff,(height & 0xff00)%0xff);
+    fwrite(buffer,sizeof(char),2,f);
+    fwrite("\x18\x00",sizeof(char),2,f);
+    for (i = height-1; i >= 0; i--) {
+        for (j = 0; j < width; j++) {
+            sprintf(buffer, "%c%c%c",
+                    (pixmap[j+(i)*width]>>16)&0x000000ff,
+                    (pixmap[j+i*width]>>8)&0x000000ff,
+                    (pixmap[j+i*width])&0x000000ff);
+            fwrite(buffer,sizeof(char),3,f);
+        }
+    }
+    fclose(f);
 }
 
 
 int main(int a, char *args[])
 {
-	int i, j;
-	printf("fractal");
-	unsigned int* pixmap = malloc(1024*1024*sizeof(int));
-	mandelbrot(1024.0f, 1024.0f, pixmap);
-	writetga(pixmap, 1024, 1024, "fracout.tga");
-	free(pixmap);
-	return 0;
+    int i, j;
+    printf("fractal");
+    unsigned int* pixmap = malloc(1024*1024*sizeof(int));
+    mandelbrot(1024.0f, 1024.0f, pixmap);
+    writetga(pixmap, 1024, 1024, "fracout.tga");
+    free(pixmap);
+    return 0;
 }
