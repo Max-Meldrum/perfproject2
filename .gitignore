@@ -1,0 +1,10 @@
+# Build artifacts
+*.o
+
+# Executables
+matmul_seq
+qsort_seq
+fractal_seq
+
+# Misc
+fracout.tga
