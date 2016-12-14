@@ -1,4 +1,7 @@
 
+CFLAGS=-std=c99
+LIBS=-lm -lpthread
+
 .PHONY: all clean
 all: fractal_seq fractal_par matmul_seq matmul_par qsort_seq qsort_par
 clean:
@@ -9,18 +12,18 @@ clean:
 
 # Fractal
 fractal_seq: src/fractal_seq.c
-	$(CC) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 fractal_par: src/fractal_par.c
-	$(CC) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
 
 # Matmul
 matmul_seq: src/matmul_seq.c
-	$(CC) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 matmul_par: src/matmul_par.c
-	$(CC) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
 
 # Qsort
 qsort_seq: src/qsort_seq.c
-	$(CC) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 qsort_par: src/qsort_par.c
-	$(CC) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $< $(LIBS)

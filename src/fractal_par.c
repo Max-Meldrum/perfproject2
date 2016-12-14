@@ -2,6 +2,11 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
+
+#include <pthread.h>
+
+#define THREAD_COUNT 4
 
 // draws a mandelbrot fractal
 // compile with gcc fractal.c -lm -std=c99 -o fractal
@@ -30,41 +35,82 @@ int pal[256] = {
     0xf6ff,0xf7ff,0xf8ff,0xfaff,0xfbff,0xfcff,0xfcff,0xfcff,0xfcff,0xfcff,
     0xfcff,0xfcff,0xfcff,0xfcff,0xfcff,0xfcff,0xfcff,0xfcff,0xfcff};
 
+const float xmin = -1.6f;
+const float xmax = 1.6f;
+const float ymin = -1.6f;
+const float ymax = 1.6f;
+
+pthread_t threads[THREAD_COUNT];
+pthread_mutex_t threadlocks[THREAD_COUNT];
+
+struct mandelparams {
+    float width;
+    float height;
+    int i;
+    int j;
+    unsigned int* pixmap;
+};
+
+void mandelcalc(void* data){
+    struct mandelparams* params = (struct mandelparams*) data;
+    float width = params->width;
+    float height = params->height;
+    int i = params->i;
+    int j = params->j;
+    unsigned int* pixmap = params->pixmap;
+    free(params);
+
+    float b = xmin + j * (xmax - xmin) / width;
+    float a = ymin + i * (ymax - ymin) / height;
+    float sx = 0.0f;
+    float sy = 0.0f;
+    int ii = 0;
+    while (sx + sy <= 64.0f) {
+        float xn = sx * sx - sy * sy + b;
+        float yn = 2 * sx * sy + a;
+        sx = xn;
+        sy = yn;
+        ii++;
+        if (ii == 1500)	{
+            break;
+        }
+    }
+    if (ii == 1500)	{
+        pixmap[j+i*(int)width] = 0;
+    }
+    else {
+        int c = (int)((ii / 32.0f) * 256.0f);
+        pixmap[j + i *(int)width] = pal[c%256];
+    }
+}
+
 void mandelbrot(float width, float height, unsigned int *pixmap)
 {
 	int i, j;
-	float xmin = -1.6f;
-	float xmax = 1.6f;
-	float ymin = -1.6f;
-	float ymax = 1.6f;
+    int ti = 0;
 	for (i = 0; i < height; i++) {
 		for (j = 0; j < width; j++) {
-			float b = xmin + j * (xmax - xmin) / width;
-			float a = ymin + i * (ymax - ymin) / height;
-			float sx = 0.0f;
-			float sy = 0.0f;
-			int ii = 0;
-			while (sx + sy <= 64.0f) {
-				float xn = sx * sx - sy * sy + b;
-				float yn = 2 * sx * sy + a;
-				sx = xn;
-				sy = yn;
-				ii++;
-				if (ii == 1500)	{
-					break;
-				}
-			}
-			if (ii == 1500)	{
-				pixmap[j+i*(int)width] = 0;
-			}
-			else {
-				int c = (int)((ii / 32.0f) * 256.0f);
-				pixmap[j + i *(int)width] = pal[c%256];
-			}
+            bool calculated = false;
+            while ( calculated == false ){
+                if (pthread_mutex_trylock(&threadlocks[ti]) == 0){
+                    struct mandelparams* args = malloc(sizeof(struct mandelparams));
+                    args->width = width;
+                    args->height = height;
+                    args->i = i;
+                    args->j = j;
+                    args->pixmap = pixmap;
+
+                    pthread_create(&threads[ti], NULL, (void*) mandelcalc, (void*)args);
+
+                    pthread_mutex_unlock(&threadlocks[ti]);
+                    calculated = true;
+                }
+                ti = (ti+1)%THREAD_COUNT;
+            }
 		}
 	}
-
-
+    for (int ti=0; ti<THREAD_COUNT; ti++)
+        pthread_join(threads[ti], NULL);
 }
 
 void writetga(unsigned int *pixmap, unsigned int width, unsigned int height, char *name)
