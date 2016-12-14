@@ -13,6 +13,10 @@
 
 #define swap(v, a, b) {unsigned tmp; tmp=v[a]; v[a]=v[b]; v[b]=tmp;}
 
+#ifndef THREAD_COUNT
+    #define THREAD_COUNT 8
+#endif
+
 static int *v;
 
 static void
@@ -66,11 +70,23 @@ partition(int *v, unsigned low, unsigned high, unsigned pivot_index)
     return high;
 }
 
+struct qsortparams {
+    int *v;
+    unsigned int low;
+    unsigned int high;
+};
+
 static void
-quick_sort(int *v, unsigned low, unsigned high)
+quick_sort(void* data)
 {
+    struct qsortparams* params = (struct qsortparams*) data;
+    int* v = params->v;
+    unsigned int low = params->low;
+    unsigned int high = params->high;
+    free(data);
+
     unsigned pivot_index;
-    
+
     /* no need to sort a vector of zero or one element */
     if (low >= high)
         return;
@@ -82,10 +98,15 @@ quick_sort(int *v, unsigned low, unsigned high)
     pivot_index = partition(v, low, high, pivot_index);
 
     /* sort the two sub arrays */
-    if (low < pivot_index)
-        quick_sort(v, low, pivot_index-1);
+    if (low < pivot_index){
+        struct qsortparams* params = malloc(sizeof(struct qsortparams));
+        params->v = v;
+        params->low = low;
+        params->high = high;
+        quick_sort((void*)params);
+    }
     if (pivot_index < high)
-        quick_sort(v, pivot_index+1, high);
+        quick_sort((void*)params);
 }
 
 int
@@ -93,7 +114,11 @@ main(int argc, char **argv)
 {
     init_array();
     //print_array();
-    quick_sort(v, 0, MAX_ITEMS-1);
+    struct qsortparams* params = malloc(sizeof(struct qsortparams));
+    params->v = v;
+    params->low = 0;
+    params->high = MAX_ITEMS-1;
+    quick_sort((void*) params);
     //print_array();
 }
 
