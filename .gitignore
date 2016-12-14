@@ -2,9 +2,12 @@
 *.o
 
 # Executables
-matmul_*
-qsort_*
-fractal_*
+matmul_seq
+matmul_par
+qsort_seq
+qsort_par
+fractal_seq
+fractal_par
 
 # Misc
 fracout.tga
