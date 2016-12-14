@@ -16,3 +16,4 @@ function run(){
 # GO!
 echo "Starting benchmark"
 run ./fractal_seq
+run ./fractal_par
