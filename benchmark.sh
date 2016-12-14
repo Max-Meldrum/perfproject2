@@ -4,7 +4,7 @@ PROD=0
 
 function run(){
     prog=$1
-    t=$(/usr/bin/time ./fractal_par 2>&1 | tail -n 2 | awk '{ print $1 $2 $3 $4 }' | head -n 1)
+    t=$(/usr/bin/time $1 2>&1 | tail -n 2 | awk '{ print $1 $2 $3 $4 }' | head -n 1)
     printf "%s" $t
 }
 
