@@ -6,7 +6,9 @@
 
 #include <pthread.h>
 
-#define THREAD_COUNT 4
+#ifndef THREAD_COUNT
+    #define THREAD_COUNT 4
+#endif
 
 // draws a mandelbrot fractal
 // compile with gcc fractal.c -lm -std=c99 -o fractal
