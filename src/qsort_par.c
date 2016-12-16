@@ -143,6 +143,6 @@ main(int argc, char **argv)
     for (int ti=0; ti < THREAD_COUNT; ti++){
         pthread_join(threads[ti], NULL);
     }
-    print_array();
+    //print_array();
 }
 

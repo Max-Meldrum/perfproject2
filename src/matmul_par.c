@@ -89,8 +89,6 @@ matmul_par_block()
         pthread_join(threads[ti], NULL);
 }
 
-// https://github.com/EvanPurkhiser/CS-Matrix-Multiplication/blob/master/report.md
-// heh..
 static void
 matmul_seq_block()
 {
@@ -98,7 +96,6 @@ matmul_seq_block()
 
     for (k = 0; k < SIZE; k += BLOCK_SIZE) 
         for (j = 0; j < SIZE; j += BLOCK_SIZE) 
-            
             for (i = 0; i < SIZE; ++i) 
                 for (jj = j; jj < min(j + BLOCK_SIZE, SIZE); ++jj) 
                     for (kk = k; kk < min(k + BLOCK_SIZE, SIZE); ++kk) 

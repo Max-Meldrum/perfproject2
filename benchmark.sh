@@ -33,18 +33,47 @@ run ./fractal_par
 printf "\n"
 
 #
+# Qsort
+#
+printf "Qsort sequential: "
+run ./qsort_seq
+printf "\n"
+
+THREAD_COUNT=1 make qsort_par > /dev/null
+printf "Qsort parallell(1): "
+run ./qsort_par
+printf "\n"
+
+THREAD_COUNT=8 make qsort_par > /dev/null
+printf "Qsort parallell(8): "
+run ./qsort_par
+printf "\n"
+
+THREAD_COUNT=128 make qsort_par > /dev/null
+printf "Qsort parallell(128): "
+run ./qsort_par
+printf "\n"
+
+#
 # Bench Matmul
 #
 printf "Matmul sequential: "
 run ./matmul_seq
 printf "\n"
 
-THREAD_COUNT=1 make fractal_par > /dev/null
+THREAD_COUNT=1 make matmul_par > /dev/null
 printf "Matmul sequential block: "
 run ./matmul_par
 printf "\n"
 
-THREAD_COUNT=8 make fractal_par > /dev/null
+THREAD_COUNT=8 make matmul_par > /dev/null
 printf "Matmul parallell block(8): "
 run ./matmul_par
+printf "\n"
+
+#
+# Bench Matmul lab3
+#
+printf "Matmul lab3 (8): "
+run ./matmul_lab3_par
 printf "\n"

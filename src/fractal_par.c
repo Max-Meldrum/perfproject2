@@ -7,7 +7,7 @@
 #include <pthread.h>
 
 #ifndef THREAD_COUNT
-    #define THREAD_COUNT 4
+    #define THREAD_COUNT 8
 #endif
 
 // draws a mandelbrot fractal
@@ -43,7 +43,6 @@ const float ymin = -1.6f;
 const float ymax = 1.6f;
 
 pthread_t threads[THREAD_COUNT];
-pthread_mutex_t threadlocks[THREAD_COUNT];
 
 struct mandelparams {
     float width;
