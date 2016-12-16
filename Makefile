@@ -10,11 +10,11 @@ THREAD_CONF=-DTHREAD_COUNT=$(THREAD_COUNT)
 
 .PHONY: all clean
 .PHONY: *
-all: fractal_seq fractal_par matmul_seq matmul_par qsort_seq qsort_par
+all: fractal_seq fractal_par matmul_seq matmul_par matmul_lab3_par qsort_seq qsort_par
 clean:
 	rm -rf \
 		fractal_seq matmul_seq qsort_seq \
-		fractal_par matmul_par qsort_par \
+		fractal_par matmul_par matmul_lab3_par qsort_par \
 		fracout.tga
 
 # Fractal
@@ -28,6 +28,9 @@ matmul_seq: src/matmul_seq.c
 	$(CC) $(CFLAGS) -o $@ $<
 matmul_par: src/matmul_par.c
 	$(CC) $(CFLAGS) -o $@ $< $(LIBS) $(THREAD_CONF)
+
+matmul_lab3_par: src/matmul_lab3_par.c
+	$(CC) $(CFLAGS) -w  -o $@ $< $(LIBS) $(THREAD_CONF)
 
 # Qsort
 qsort_seq: src/qsort_seq.c
