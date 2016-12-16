@@ -14,6 +14,10 @@ function run(){
 
 # GO!
 echo "Starting benchmark"
+
+#
+# Bench Fractal
+#
 printf "Fractal sequential: "
 run ./fractal_seq
 printf "\n"
@@ -26,4 +30,21 @@ printf "\n"
 THREAD_COUNT=8 make fractal_par > /dev/null
 printf "Fractal parallell(8): "
 run ./fractal_par
+printf "\n"
+
+#
+# Bench Matmul
+#
+printf "Matmul sequential: "
+run ./matmul_seq
+printf "\n"
+
+THREAD_COUNT=1 make fractal_par > /dev/null
+printf "Matmul sequential block: "
+run ./matmul_par
+printf "\n"
+
+THREAD_COUNT=8 make fractal_par > /dev/null
+printf "Matmul parallell block(8): "
+run ./matmul_par
 printf "\n"
