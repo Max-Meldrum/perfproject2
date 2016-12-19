@@ -43,22 +43,25 @@ const float ymin = -1.6f;
 const float ymax = 1.6f;
 
 pthread_t threads[THREAD_COUNT];
-
+// Struct that is used to send in arguments to the threaded mandelcalc function
 struct mandelparams {
     float width;
     float height;
-    int n;
+    int n; // Thread index
     unsigned int* pixmap;
 };
 
 void mandelcalc(void* data){
     struct mandelparams* params = (struct mandelparams*) data;
+    // retreive variables from the struct
     float width = params->width;
     float height = params->height;
     int n = params->n;
     unsigned int* pixmap = params->pixmap;
-    free(params);
+    free(params); // deallocate memory
 
+    // Set "i" to be "n" which is the sent in thread index
+    // Increment the outer loop with the THREAD_COUNT
     for (int i = n; i < height; i+=THREAD_COUNT) {
         for (int j = 0; j < width; j++) {
             float b = xmin + j * (xmax - xmin) / width;
@@ -89,6 +92,7 @@ void mandelcalc(void* data){
 
 void mandelbrot(float width, float height, unsigned int *pixmap)
 {
+    // Iterate through THREAD_COUNT and create the threads that will do the work
     for (int n=0; n<THREAD_COUNT; n++){
         struct mandelparams* args = malloc(sizeof(struct mandelparams));
         args->width = width;
@@ -98,6 +102,8 @@ void mandelbrot(float width, float height, unsigned int *pixmap)
 
         pthread_create(&threads[n], NULL, (void*) mandelcalc, (void*)args);
     }
+
+    // Wait for all the threads to finish by the join command
     for (int ti=0; ti<THREAD_COUNT; ti++)
         pthread_join(threads[ti], NULL);
 }

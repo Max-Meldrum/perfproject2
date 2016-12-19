@@ -39,7 +39,7 @@ init_matrix(void)
 	     */
 	    a[i][j] = 1.0;
 	    b[i][j] = 1.0;
-        //temp
+        // Set c[i][j] to 0.0 in the initialization instead of in the algorithm
         c[i][j] = 0.0;
         }
 }
@@ -85,6 +85,7 @@ matmul_par_block()
             ti++;
         }
     }
+    // Wait for all the threads to finish by the join command
     for (int ti = 0; ti < THREAD_COUNT; ti++)
         pthread_join(threads[ti], NULL);
 }
