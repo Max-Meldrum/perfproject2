@@ -1,9 +1,3 @@
-/***************************************************************************
- *
- * Sequential version of Matrix-Matrix multiplication
- *
- ***************************************************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -17,6 +11,7 @@
 #define BLOCK_SIZE_W 512
 #define BLOCK_SIZE_H 256
 
+// Macro needed for the blocked 2d matrix multiplication algorithm
 #define min(x, y) (((x) < (y)) ? (x) : (y))
 
 static double a[SIZE][SIZE];
@@ -44,21 +39,19 @@ init_matrix(void)
         }
 }
 
-
+// Struct that is used to send in arguments to the threaded block calc function
 struct matmul_par_block_calc_args {
     int k;
     int j;
-    int ti;
 };
 
 static void matmul_par_block_calc(void* data){
     struct matmul_par_block_calc_args* args = (struct matmul_par_block_calc_args*) data;
-    int ti = args->ti;
     int kk, jj;
     int i;
     int k = args->k;
     int j = args->j;
-    free(data);
+    free(data); // deallocate memory of the struct
     for (i = 0; i < SIZE; ++i){
         for (jj = j; jj < min(j + BLOCK_SIZE_H, SIZE); ++jj){
             for (kk = k; kk < min(k + BLOCK_SIZE_W, SIZE); ++kk){
@@ -69,6 +62,7 @@ static void matmul_par_block_calc(void* data){
         }
     }
 }
+
 static void
 matmul_par_block()
 {
@@ -80,7 +74,6 @@ matmul_par_block()
             struct matmul_par_block_calc_args* args = malloc(sizeof(struct matmul_par_block_calc_args));
             args->k = k;
             args->j = j;
-            args->ti = ti;
             pthread_create(&threads[ti], NULL, (void*) matmul_par_block_calc, (void*) args);
             ti++;
         }
