@@ -29,7 +29,7 @@ init_matrix(void)
     for (i = 0; i < SIZE; i++)
         for (j = 0; j < SIZE; j++) {
 	    /* Simple initialization, which enables us to easy check
-	     * the correct answer. Each element in c will have the same 
+	     * the correct answer. Each element in c will have the same
 	     * value as SIZE after the matmul operation.
 	     */
 	    a[i][j] = 1.0;
@@ -53,6 +53,7 @@ static void matmul_par_block_calc(void* data){
     int j = args->j;
     free(data); // deallocate memory of the struct
     for (i = 0; i < SIZE; ++i){
+        // Istead of iterating over BLOCK_SIZE like in the sequential implementation, iterate over BLOCK_SIZE_W and BLOCK_SIZE_H to get 8 blocks for our 8 threads
         for (jj = j; jj < min(j + BLOCK_SIZE_H, SIZE); ++jj){
             for (kk = k; kk < min(k + BLOCK_SIZE_W, SIZE); ++kk){
                 pthread_mutex_lock(&locks[i][jj]);
@@ -69,6 +70,7 @@ matmul_par_block()
     int i, j, k;
 
     int ti = 0;
+    // Istead of iterating over BLOCK_SIZE like in the sequential implementation, iterate over BLOCK_SIZE_W and BLOCK_SIZE_H to get 8 blocks for our 8 threads
     for (k = 0; k < SIZE; k += BLOCK_SIZE_W){
         for (j = 0; j < SIZE; j += BLOCK_SIZE_H){
             struct matmul_par_block_calc_args* args = malloc(sizeof(struct matmul_par_block_calc_args));
@@ -91,17 +93,19 @@ matmul_seq_block()
 {
     int i, j, k, kk, jj;
 
-    for (k = 0; k < SIZE; k += BLOCK_SIZE) 
-        for (j = 0; j < SIZE; j += BLOCK_SIZE) 
-            for (i = 0; i < SIZE; ++i) 
-                for (jj = j; jj < min(j + BLOCK_SIZE, SIZE); ++jj) 
-                    for (kk = k; kk < min(k + BLOCK_SIZE, SIZE); ++kk) 
+    for (k = 0; k < SIZE; k += BLOCK_SIZE) // Partition columns into blocks
+        for (j = 0; j < SIZE; j += BLOCK_SIZE) // Partition rows into block
+            for (i = 0; i < SIZE; ++i) // Do one iteration over each cell
+                for (jj = j; jj < min(j + BLOCK_SIZE, SIZE); ++jj) // Iterate over each column in current block
+                    for (kk = k; kk < min(k + BLOCK_SIZE, SIZE); ++kk) // Iterate ver each row in current block
+                        // c[i][jj] will increase the value at i,jj
+                        // (every row, all columns in block)
+                        // with a[i][kk] * b[kk][jj]
+                        // (each row in a, every columns in block)
+                        // (every row in b in block, every column in b in block)
                         c[i][jj] += a[i][kk] * b[kk][jj];
 }
 
-// https://github.com/EvanPurkhiser/CS-Matrix-Multiplication/blob/master/report.md
-// 2d blocked matrix multiplication
-// More info in the report
 static void
 matmul_seq()
 {
