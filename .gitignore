@@ -4,6 +4,7 @@
 # Executables
 matmul_seq
 matmul_par
+matmul_lab3_par
 qsort_seq
 qsort_par
 fractal_seq
