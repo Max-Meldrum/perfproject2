@@ -76,10 +76,10 @@ partition(int *v, unsigned low, unsigned high, unsigned pivot_index)
 }
 
 struct qsortparams {
-    int *v;
-    unsigned low;
-    unsigned high;
-    unsigned depth;
+    int *v; // Pointer to array to sort
+    unsigned low; // Low partition limit
+    unsigned high; // High partition limit
+    unsigned depth; // Current depth
 };
 
 static void
@@ -111,7 +111,12 @@ quick_sort(void* data)
         params->low = low;
         params->high = pivot_index-1;
         params->depth = depth+1;
-        if ( depth < 10 && (THREAD_COUNT >> depth) >= 1 && thread_count < THREAD_COUNT){
+        /*
+         * Check max depth < 16, because otherwise THREAD_COUNT >> depth can overflow
+         * Since there are two paths on each depth, THREAD_COUNT >> depth will make sure that the threads are evently distributed over depths
+         * If the THEAD_COUNT is not even when squarerooted, such as 2,3,5,6,7, and 9, create threads on the last unthreaded depth until the limit is reached
+         */
+        if ( depth < 16 && (THREAD_COUNT >> depth) >= 1 && thread_count < THREAD_COUNT){
             //printf("d=%d at %d,%d and %d\n", depth, low, high, THREAD_COUNT >> depth);
             thread_count++;
             pthread_create(&threads[thread_count-1], NULL, (void*) quick_sort, (void*) params);
