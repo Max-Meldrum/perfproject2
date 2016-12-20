@@ -138,7 +138,6 @@ void writetga(unsigned int *pixmap, unsigned int width, unsigned int height, cha
 
 int main(int a, char *args[])
 {
-    int i, j;
     unsigned int* pixmap = malloc(1024*1024*sizeof(int));
     mandelbrot(1024.0f, 1024.0f, pixmap);
     writetga(pixmap, 1024, 1024, "fracout.tga");

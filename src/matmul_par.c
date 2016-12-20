@@ -67,7 +67,7 @@ static void matmul_par_block_calc(void* data){
 static void
 matmul_par_block()
 {
-    int i, j, k;
+    int j, k;
 
     int ti = 0;
     // Istead of iterating over BLOCK_SIZE like in the sequential implementation, iterate over BLOCK_SIZE_W and BLOCK_SIZE_H to get 8 blocks for our 8 threads
