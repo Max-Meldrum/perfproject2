@@ -83,6 +83,9 @@ matmul_par_block()
         pthread_join(threads[ti], NULL);
 }
 
+// https://github.com/EvanPurkhiser/CS-Matrix-Multiplication/blob/master/report.md
+// 2d blocked matrix multiplication
+// More info in the report
 static void
 matmul_seq_block()
 {
@@ -96,6 +99,9 @@ matmul_seq_block()
                         c[i][jj] += a[i][kk] * b[kk][jj];
 }
 
+// https://github.com/EvanPurkhiser/CS-Matrix-Multiplication/blob/master/report.md
+// 2d blocked matrix multiplication
+// More info in the report
 static void
 matmul_seq()
 {
